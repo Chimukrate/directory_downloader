@@ -16,14 +16,14 @@ class DDownloader:
         verbose:bool ->  provide details in output
     """
 
-    def __init__(self, coloring=True, verbose=True):
+    def __init__(self, coloring=True, verbose=True, auth=aiohttp.BasicAuth('', '')):
         self.downloadable_links = set()
         self.crawled_links = set()
         self.verbose = verbose
         self.coloring = coloring
+        self.auth = auth
 
-    async def get_page_links(self, url: str, extensions: List[str] = None, filter: Union[str, callable] = None) -> List[
-        str]:
+    async def get_page_links(self, url: str, extensions: List[str] = None, filter: Union[str, callable] = None) -> List[str]:
 
         """ returns a list of links on the page
             url:str -> the directory link
@@ -75,14 +75,14 @@ class DDownloader:
             url:str -> the directory link
         """
         async with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
+            async with session.get(url, auth=self.auth) as resp:
                 if "text/html" not in resp.headers.get("Content-Type"):
                     return True
                 text = await resp.read()
                 return text.decode("utf-8")
 
     async def _download_file(self, url: str, session: aiohttp.ClientSession, full_diretory: str = None):
-        async with session.get(url) as response:
+        async with session.get(url, auth=self.auth) as response:
             if response.status != 200:
                 response.raise_for_status()
             parsed_url = urlparse(url)
@@ -187,4 +187,3 @@ class DDownloader:
             if not self.coloring:
                 output = self.clearColors(output)
             print(output)
-
